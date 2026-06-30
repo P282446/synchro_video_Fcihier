@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Éditeur de Spyder
-
-Ceci est un script temporaire.
-"""
-
-
-
 import sys
 import time
 import os
@@ -59,19 +51,14 @@ zones = cp.classification_with_coor(video_path, coor_eye)
 
 fin = time.time()
 
-print(f"Temps d'exécution : {(fin-debut)/60:.2f} minutes")
+
 
 # Alarme pour prévenir quand l'exécution est terminé
-os.system('notify-send "Segmentation terminée" "Le calcul est fini."')
-
-os.system('espeak "Segmentation terminée"')
-
-# Sauuvegarde de la video en fichier .csv
-#f["region"] = zones["zones"]
-#f.to_csv("/home/seydou/Bureau/results_grid/PEP_sujet/PEP001_after_sync.csv", index=False)
 os.system('notify-send "Synchronisation terminée" "Le calcul est fini."')
 
-# Sauuvegarde de la video en fichier .csv
+print(f"Temps d'exécution : {(fin-debut)/60:.2f} minutes")
+
+# Sauuvegarde du resultat en fichier .csv
 f["region"] = zones["zones"]
 f.to_csv(output_path, index=False)
 
