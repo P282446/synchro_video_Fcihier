@@ -46,7 +46,7 @@ base_name = os.path.splitext(os.path.basename(file))[0]
 output_path = os.path.join(output_dir, base_name + "_result.csv")
 
 
-f = pd.read_csv("file", sep = "\t")
+f = pd.read_csv(file, sep = "\t")
 
 # On recupere les coordonnees de fixations du regard
 coor_eye = f[["Lft X Pos","Lft Y Pos"]]
