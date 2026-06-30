@@ -45,8 +45,11 @@ output_dir = os.path.dirname(file)
 base_name = os.path.splitext(os.path.basename(file))[0]
 output_path = os.path.join(output_dir, base_name + "_result.csv")
 
+
+f = pd.read_csv("file", sep = "\t")
+
 # On recupere les coordonnees de fixations du regard
-coor_eye = file[["Lft X Pos","Lft Y Pos"]]
+coor_eye = f[["Lft X Pos","Lft Y Pos"]]
 
 # On calcul aussi la durée d'éxécution du programme
 
@@ -64,13 +67,13 @@ os.system('notify-send "Segmentation terminée" "Le calcul est fini."')
 os.system('espeak "Segmentation terminée"')
 
 # Sauuvegarde de la video en fichier .csv
-file["region"] = zones["zones"]
-file.to_csv("/home/seydou/Bureau/results_grid/PEP_sujet/PEP001_after_sync.csv", index=False)
+#f["region"] = zones["zones"]
+#f.to_csv("/home/seydou/Bureau/results_grid/PEP_sujet/PEP001_after_sync.csv", index=False)
 os.system('notify-send "Synchronisation terminée" "Le calcul est fini."')
 
 # Sauuvegarde de la video en fichier .csv
-file["region"] = zones["zones"]
-file.to_csv(output_path, index=False)
+f["region"] = zones["zones"]
+f.to_csv(output_path, index=False)
 
 
 os.system('espeak "Synchronisation terminée"')
