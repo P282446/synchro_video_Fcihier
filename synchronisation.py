@@ -5,6 +5,7 @@ import os
 import classification_pixels as cp
 #from traitement_video import *
 import pandas as pd
+import Parcours_dossier as pcd
 
 
 """
