@@ -55,7 +55,7 @@ fin = time.time()
 
 
 # Alarme pour prévenir quand l'exécution est terminé
-os.system('notify-send "Synchronisation terminée" "Le calcul est fini."')
+#os.system('notify-send "Synchronisation terminée" "Le calcul est fini."')
 
 print(f"Temps d'exécution : {(fin-debut)/60:.2f} minutes")
 
@@ -64,5 +64,5 @@ f["region"] = zones["zones"]
 f.to_csv(output_path, index=False)
 
 
-os.system('espeak "Synchronisation terminée"')
+#os.system('espeak "Synchronisation terminée"')
 
