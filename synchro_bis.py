@@ -27,7 +27,7 @@ import pandas as pd
 
 import classification_pixels as cp
 import Parcours_dossier as pcd  # noqa: F401 (conservé si utilisé ailleurs dans le pipeline)
-
+from typing import Optional
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -79,12 +79,11 @@ def load_gaze_data(gaze_file: str) -> pd.DataFrame:
     return df
 
 
-def build_output_path(gaze_file: str, output_dir: str | None) -> str:
+def build_output_path(gaze_file: str, output_dir: Optional[str]) -> str:
     base_name = os.path.splitext(os.path.basename(gaze_file))[0]
     target_dir = output_dir if output_dir else os.path.dirname(gaze_file) or "."
     os.makedirs(target_dir, exist_ok=True)
     return os.path.join(target_dir, base_name + "_result.csv")
-
 
 def main():
     args = parse_arguments()
