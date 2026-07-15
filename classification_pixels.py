@@ -59,8 +59,74 @@ def classification(video_path) :
     """
     return label
 
+import cv2
+import numpy as np
+from tqdm import tqdm
 
-def classification_with_coor(video_path, coor) :
+
+def classification_with_coor(video_path, coor):
+    sync = coor
+    coor = coor.to_numpy()
+    n = len(coor)
+    zones = [0] * n
+    xx = coor[:, 0]
+    yy = coor[:, 1]
+
+    cap = cv2.VideoCapture(video_path)
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    pbar = tqdm(total=total, desc="Synchronisation")
+
+    # Couleurs (ATTENTION OpenCV = BGR)
+    colors = {
+        1: np.array([97, 254, 0]),    # vert  -> Yeux
+        2: np.array([99, 0, 252]),    # rose  -> Nez et Bouche
+        3: np.array([94, 254, 253]),  # jaune -> Visage
+        4: np.array([0, 0, 250]),     # rouge -> Haut du corps
+        5: np.array([96, 0, 0]),      # bleu  -> Reste de la tête
+    }
+    TOLERANCE = 10  # marge d'erreur pour absorber les artefacts de compression
+
+    temp = -3  # démarre à -3 pour que la 1re frame utilise range(0,3)
+
+    while True:
+        temp = temp + 3
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # image label (par pixel), uint8 car les codes vont de 0 à 5
+        label = np.zeros(frame.shape[:2], dtype=np.uint8)  # 0 = noir/autre
+
+        # segmentation vectorisée avec tolérance sur la couleur
+        for k, color in colors.items():
+            diff = np.abs(frame.astype(np.int16) - color)
+            mask = np.all(diff <= TOLERANCE, axis=-1)
+            label[mask] = k
+        # label contient maintenant la zone d'appartenance de chaque pixel
+
+        for i in range(temp, temp + 3):
+            if i >= n:
+                break
+            x, y = int(xx[i]), int(yy[i])
+            # sécurité : coordonnées hors image (regard perdu, clignement...)
+            if 0 <= y < label.shape[0] and 0 <= x < label.shape[1]:
+                zones[i] = label[y, x]
+            else:
+                zones[i] = 0
+
+        pbar.update(1)
+
+    pbar.close()
+    cap.release()
+
+    # sync : contient les coordonnées avec leur zone correspondante dans la vidéo segmentée
+    sync["zones"] = zones
+    print("0 : Autre\n1 : Yeux\n2 : Nez et Bouche\n3 : Visage\n4 : Haut du corps\n5 : Reste de la tête\n")
+
+    return sync
+
+
+def classification_with_coor_bis(video_path, coor) :
     
     
     #video_path = sys.argv[1]
@@ -70,7 +136,7 @@ def classification_with_coor(video_path, coor) :
     xx = coor[:,0]  #.to_numpy()
     yy = coor[:,1]  #.to_numpy()
     cap = cv2.VideoCapture(video_path)
-    temp = 0
+    temp = -3
     
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     pbar = tqdm(total=total, desc="Synchronisation")
@@ -91,7 +157,7 @@ def classification_with_coor(video_path, coor) :
             break
     
         # image label (par pixel)
-        label = np.full(frame.shape[:2], 0, dtype=object)  # 0 = noir/autre 
+        label = np.full(frame.shape[:2], 0, dtype=np.uint8)  # 0 = noir/autre 
         # segmentation vectorisée
         for k, color in colors.items():
             mask = np.all(frame == color, axis=-1)
