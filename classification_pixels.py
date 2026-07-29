@@ -59,12 +59,96 @@ def classification(video_path) :
     """
     return label
 
-import cv2
-import numpy as np
-from tqdm import tqdm
-
-
 def classification_with_coor(video_path, coor):
+
+    # Copie du DataFrame afin de ne pas modifier les données d'origine
+    sync = coor.copy()
+
+    # Les coordonnées (0,0) correspondent à une perte de suivi de l'eye-tracker.
+    # Elles sont remplacées par NaN afin de ne pas être classées dans la zone "Autre".
+    mask = (sync["Lft X Pos"] == 0) & (sync["Lft Y Pos"] == 0)
+    sync.loc[mask, ["Lft X Pos", "Lft Y Pos"]] = np.nan
+
+    coor = sync.to_numpy()
+    n = len(coor)
+    zones = np.zeros(n, dtype=np.uint8)
+
+    xx = coor[:, 0]
+    yy = coor[:, 1]
+
+    cap = cv2.VideoCapture(video_path)
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    pbar = tqdm(total=total, desc="Synchronisation")
+
+    # Couleurs (ATTENTION OpenCV = BGR)
+    colors = {
+        1: np.array([97, 254, 0]),    # vert  -> Yeux
+        2: np.array([99, 0, 252]),    # rose  -> Nez et Bouche
+        3: np.array([94, 254, 253]),  # jaune -> Visage
+        4: np.array([0, 0, 250]),     # rouge -> Haut du corps
+        5: np.array([96, 0, 0]),      # bleu  -> Reste de la tête
+    }
+
+    TOLERANCE = 10  # marge d'erreur pour absorber les artefacts de compression
+
+    temp = -3  # démarre à -3 pour que la 1re frame utilise range(0,3)
+
+    while True:
+
+        temp = temp + 3
+
+        ret, frame = cap.read()
+
+        if not ret:
+            break
+
+        # image label (par pixel), uint8 car les codes vont de 0 à 5
+        label = np.zeros(frame.shape[:2], dtype=np.uint8)  # 0 = noir/autre
+
+        # Amélioration : conversion une seule fois en int16 pour éviter
+        # un dépassement de capacité lors du calcul des différences de couleurs.
+        frame16 = frame.astype(np.int16)
+
+        # segmentation vectorisée avec tolérance sur la couleur
+        for k, color in colors.items():
+            diff = np.abs(frame16 - color)
+            mask = np.all(diff <= TOLERANCE, axis=-1)
+            label[mask] = k
+
+        # label contient maintenant la zone d'appartenance de chaque pixel
+
+        # Amélioration : min(temp+3, n) évite de dépasser la taille du tableau.
+        for i in range(temp, min(temp + 3, n)):
+
+            # Amélioration : si l'eye-tracker n'a pas mesuré la position du regard,
+            # les coordonnées sont NaN. On attribue alors un code spécifique
+            # (255 = perte de suivi) afin de ne pas les confondre avec la zone "Autre".
+            if np.isnan(xx[i]) or np.isnan(yy[i]):
+                zones[i] = 255
+                continue
+
+            x = int(xx[i])
+            y = int(yy[i])
+
+            # sécurité : coordonnées hors image (regard perdu, clignement...)
+            if 0 <= y < label.shape[0] and 0 <= x < label.shape[1]:
+                zones[i] = label[y, x]
+            else:
+                # Amélioration : les coordonnées hors image sont également
+                # considérées comme une perte de suivi.
+                zones[i] = 255
+
+        pbar.update(1)
+
+    cap.release()
+    pbar.close()
+
+    # Ajout de la colonne contenant la zone associée à chaque point de regard.
+    sync["Zone"] = zones
+
+    return sync
+
+def classification_with_coor_bis2(video_path, coor):
     sync = coor
     coor = coor.to_numpy()
     n = len(coor)

@@ -27,7 +27,7 @@ for video_path in "$VIDEO_DIR"/seg_*.wmv; do
     fi
 
     cd "$SCRIPT_DIR" || exit 1
-    python synchronisation.py "$video_path" "$txt_path"
+    python synchro_bis.py "$video_path" "$txt_path"
 
     if [ $? -eq 0 ] && [ -f "$generated_csv" ]; then
         mv "$generated_csv" "$final_csv"

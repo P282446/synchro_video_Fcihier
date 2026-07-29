@@ -68,7 +68,17 @@ def validate_inputs(video_path: str, gaze_file: str):
 
 
 def load_gaze_data(gaze_file: str) -> pd.DataFrame:
-    df = pd.read_csv(gaze_file, sep="\t")
+    # Détection automatique du séparateur (tab ou virgule)
+    with open(gaze_file, 'r') as f:
+        first_line = f.readline()
+    sep = "\t" if "\t" in first_line else ","
+
+    df = pd.read_csv(gaze_file, sep=sep)
+
+    # Normalise les noms de colonnes : remplace les points par des espaces
+    # au cas où le fichier vient d'un export R (qui convertit espaces -> points)
+    df.columns = [col.replace(".", " ") for col in df.columns]
+
     required_cols = {"Lft X Pos", "Lft Y Pos"}
     missing = required_cols - set(df.columns)
     if missing:
@@ -83,7 +93,7 @@ def build_output_path(gaze_file: str, output_dir: Optional[str]) -> str:
     base_name = os.path.splitext(os.path.basename(gaze_file))[0]
     target_dir = output_dir if output_dir else os.path.dirname(gaze_file) or "."
     os.makedirs(target_dir, exist_ok=True)
-    return os.path.join(target_dir, base_name + "_result.csv")
+    return os.path.join(target_dir, base_name + "_result_synchro.csv")
 
 def main():
     args = parse_arguments()
@@ -108,6 +118,7 @@ def main():
         sys.exit(1)
 
     coor_eye = gaze_df[["Lft X Pos", "Lft Y Pos"]]
+
 
     logging.info("Démarrage de la classification...")
     start = time.time()
