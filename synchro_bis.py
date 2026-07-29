@@ -123,7 +123,7 @@ def main():
     logging.info("Démarrage de la classification...")
     start = time.time()
     try:
-        zones = cp.classification_with_coor_bis(args.video_path, coor_eye)
+        zones = cp.classification_with_coor(args.video_path, coor_eye)
     except Exception as e:
         logging.error("Échec de la classification : %s", e)
         sys.exit(1)
