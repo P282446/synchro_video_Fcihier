@@ -144,7 +144,7 @@ def classification_with_coor(video_path, coor):
     pbar.close()
 
     # Ajout de la colonne contenant la zone associée à chaque point de regard.
-    sync["Zone"] = zones
+    sync["zones"] = zones
 
     return sync
 
