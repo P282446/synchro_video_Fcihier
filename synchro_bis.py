@@ -6,6 +6,7 @@ fichier .txt issu du fichier .eta (coordonnées de regard).
 
 La fonction centrale de ce programme est classification_pixels.classification_with_coor(video_path, coor_eye).
 
+
 Entrées :
     video_path : chemin de la vidéo segmentée
     file       : chemin du fichier .txt contenant les coordonnées du regard
@@ -23,11 +24,13 @@ import os
 import sys
 import time
 
+import numpy as np
 import pandas as pd
 
 import classification_pixels as cp
 import Parcours_dossier as pcd  # noqa: F401 (conservé si utilisé ailleurs dans le pipeline)
 from typing import Optional
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -89,11 +92,44 @@ def load_gaze_data(gaze_file: str) -> pd.DataFrame:
     return df
 
 
+def mask_missing_gaze_values(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Les coordonnées (0,0) correspondent à une perte de suivi de l'eye-tracker
+    (mesure absente), et non à une position réelle du regard. Elles sont donc
+    remplacées par NaN afin de ne pas être classées à tort dans une zone
+    (ex. "Autre") lors de la synchronisation.
+
+    Une vérification est effectuée pour s'assurer que le nombre de valeurs
+    manquantes après transformation correspond bien au nombre de zéros
+    détectés avant transformation.
+    """
+    # Nombre de mesures absentes (coordonnées à 0,0) avant transformation
+    nb_absentes = int(((df["Lft X Pos"] == 0) & (df["Lft Y Pos"] == 0)).sum())
+    logging.info("Nombre de mesures absentes détectées (0,0) : %d", nb_absentes)
+
+    # Codage des mesures absentes en NaN
+    zero_mask = (df["Lft X Pos"] == 0) & (df["Lft Y Pos"] == 0)
+    df.loc[zero_mask, ["Lft X Pos", "Lft Y Pos"]] = np.nan
+
+    # Vérification : le nombre de NaN doit correspondre au nombre de zéros détectés
+    nb_na = int((df["Lft X Pos"].isna() & df["Lft Y Pos"].isna()).sum())
+    if nb_na == nb_absentes:
+        logging.info("Vérification des valeurs manquantes : OK")
+    else:
+        logging.error(
+            "Vérification des valeurs manquantes : ERREUR "
+            "(attendu %d, obtenu %d)", nb_absentes, nb_na
+        )
+
+    return df
+
+
 def build_output_path(gaze_file: str, output_dir: Optional[str]) -> str:
     base_name = os.path.splitext(os.path.basename(gaze_file))[0]
     target_dir = output_dir if output_dir else os.path.dirname(gaze_file) or "."
     os.makedirs(target_dir, exist_ok=True)
     return os.path.join(target_dir, base_name + "_result_synchro.csv")
+
 
 def main():
     args = parse_arguments()
@@ -117,8 +153,11 @@ def main():
         logging.error("Erreur de lecture du fichier de coordonnées : %s", e)
         sys.exit(1)
 
-    coor_eye = gaze_df[["Lft X Pos", "Lft Y Pos"]]
+    # Remplace les coordonnées (0,0) [mesures absentes] par NaN,
+    # avec vérification de cohérence
+    gaze_df = mask_missing_gaze_values(gaze_df)
 
+    coor_eye = gaze_df[["Lft X Pos", "Lft Y Pos"]]
 
     logging.info("Démarrage de la classification...")
     start = time.time()
