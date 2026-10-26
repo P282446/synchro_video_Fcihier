@@ -82,7 +82,7 @@ def load_gaze_data(gaze_file: str) -> pd.DataFrame:
     # au cas où le fichier vient d'un export R (qui convertit espaces -> points)
     df.columns = [col.replace(".", " ") for col in df.columns]
 
-    required_cols = {"Lft X Pos", "Lft Y Pos"}
+    required_cols = {"Lft X Pos", "Lft Y Pos", "Capture Time" }
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(
@@ -157,12 +157,12 @@ def main():
     # avec vérification de cohérence
     gaze_df = mask_missing_gaze_values(gaze_df)
 
-    coor_eye = gaze_df[["Lft X Pos", "Lft Y Pos"]]
+    coor_eye = gaze_df[["Lft X Pos", "Lft Y Pos", "Capture Time"]]
 
     logging.info("Démarrage de la classification...")
     start = time.time()
     try:
-        zones = cp.classification_with_coor(args.video_path, coor_eye)
+        zones = cp.classification_with_coor(args.video_path, coor_eye, color_order = "RGB")
     except Exception as e:
         logging.error("Échec de la classification : %s", e)
         sys.exit(1)
