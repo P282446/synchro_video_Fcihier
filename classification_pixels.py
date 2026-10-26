@@ -270,7 +270,7 @@ def classification_with_coor(video_path, coor,
     sync["hors_video"] = hors_video
     return sync
 
-def classification_with_coor1(video_path, coor,
+def classification_with_coor_V1(video_path, coor,
                              color_order="auto",    # "auto", "BGR" ou "RGB"
                              seuil_couleur=40):
 
