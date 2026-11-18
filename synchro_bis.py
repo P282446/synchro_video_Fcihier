@@ -28,7 +28,6 @@ import numpy as np
 import pandas as pd
 
 import classification_pixels as cp
-import Parcours_dossier as pcd  # noqa: F401 (conservé si utilisé ailleurs dans le pipeline)
 from typing import Optional
 
 
