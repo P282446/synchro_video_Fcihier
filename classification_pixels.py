@@ -71,14 +71,6 @@ def detecter_ordre_couleurs(cap, colors_bgr, seuil, nb_echantillons=20):
 
     return "BGR" if score_bgr >= score_rgb else "RGB"
 
-import cv2
-import numpy as np
-from tqdm import tqdm
-
-# Les fonctions suivantes restent celles de votre projet (inchangees) :
-#   COLORS_BGR, detecter_ordre_couleurs(cap, COLORS_BGR, seuil_couleur),
-#   classer_pixels(frame, colors, seuil_couleur) -> (label, total_colored_pixels)
-
 
 def _col(df, nom):
     """Retrouve une colonne qu'elle s'appelle 'Lft X Pos' ou 'Lft.X.Pos'."""

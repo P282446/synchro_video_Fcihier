@@ -2,7 +2,7 @@
 
 VIDEO_DIR=~/Bureau/videos
 TXT_DIR=~/Bureau/fichiers
-OUTPUT_DIR=~/Bureau/resultat_synchro
+OUTPUT_DIR=~/Bureau/resultats_synchro_bis
 SCRIPT_DIR=~/Bureau/synchronisation/synchro_video_Fcihier
 
 mkdir -p "$OUTPUT_DIR"
